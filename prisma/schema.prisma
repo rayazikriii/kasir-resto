@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  KASIR
+}
+
+enum PaymentMethod {
+  TUNAI
+  QRIS
+  DEBIT
+}
+
+model User {
+  id        Int         @id @default(autoincrement())
+  nama      String
+  username  String      @unique
+  password  String
+  role      Role        @default(KASIR)
+  createdAt DateTime    @default(now())
+  transaksi Transaksi[]
+}
+
+model Product {
+  id              Int               @id @default(autoincrement())
+  kodeBarang      String            @unique
+  namaBarang      String
+  harga           Decimal           @db.Decimal(10, 2)
+  stok            Int
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  detailTransaksi DetailTransaksi[]
+}
+
+model Member {
+  id        Int         @id @default(autoincrement())
+  nama      String
+  noTelp    String      @unique
+  poin      Int         @default(0)
+  createdAt DateTime    @default(now())
+  transaksi Transaksi[]
+}
+
+model Transaksi {
+  id            Int               @id @default(autoincrement())
+  kodeTransaksi String            @unique
+  kasirId       Int
+  memberId      Int?
+  metodeBayar   PaymentMethod
+  totalHarga    Decimal           @db.Decimal(12, 2)
+  tanggal       DateTime          @default(now())
+  kasir         User              @relation(fields: [kasirId], references: [id])
+  member        Member?           @relation(fields: [memberId], references: [id])
+  detail        DetailTransaksi[]
+}
+
+model DetailTransaksi {
+  id          Int       @id @default(autoincrement())
+  transaksiId Int
+  productId   Int
+  jumlah      Int
+  hargaSatuan Decimal   @db.Decimal(10, 2)
+  subtotal    Decimal   @db.Decimal(12, 2)
+  transaksi   Transaksi @relation(fields: [transaksiId], references: [id])
+  product     Product   @relation(fields: [productId], references: [id])
+}
